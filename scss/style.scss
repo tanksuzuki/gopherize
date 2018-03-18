@@ -1,0 +1,53 @@
+$primary-color: #6ad7e5;
+
+@import "node_modules/spectre.css/src/spectre";
+@import "node_modules/spectre.css/src/spectre-exp";
+@import "snackbar-material";
+
+.comparison-slider {
+  height: auto;
+  padding-bottom: 56.2222%;
+}
+
+.comparison-slider .filter-grayscale {
+  filter: grayscale(75%);
+}
+
+.block {
+  padding: 4rem 0;
+}
+
+.btn-github {
+  @include button-variant(#333);
+}
+
+.gopherWrap {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.w-100 {
+  width: 100%;
+}
+
+.m-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.exampleImg {
+  border: 2px solid $dark-color;
+}
+
+@keyframes horizontal {
+  0% { transform: translateX(0px); }
+  25% { transform: translateX(5px); }
+  50% { transform: translateX(0px); }
+  75% { transform: translateX(-5px); }
+  100% { transform: translateX(0px); }
+}
+
+.movingGopher {
+  animation: horizontal linear .75s infinite;
+}

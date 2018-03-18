@@ -1,0 +1,19 @@
+{
+  "name": "gopherize",
+  "dependencies": {
+    "spectre.css": "0.5.1"
+  },
+  "devDependencies": {
+    "autoprefixer": "7.2.3",
+    "node-sass": "4.7.2",
+    "postcss-cli": "4.1.1",
+    "rimraf": "2.6.2"
+  },
+  "scripts": {
+    "build": "npm run build-clean && npm run build-sass && npm run build-autoprefix",
+    "build-autoprefix": "postcss --use autoprefixer --output app/assets/css/style.css app/assets/css/style.css",
+    "build-clean": "rimraf css",
+    "build-sass": "node-sass --output-style compressed --source-map true scss/style.scss app/assets/css/style.css",
+    "start": "npm run build-sass -- --watch --recursive"
+  }
+}

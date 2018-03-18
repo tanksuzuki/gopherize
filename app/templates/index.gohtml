@@ -1,0 +1,182 @@
+{{define "index"}}
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title></title>
+		<meta name="description" content="">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta property="og:title" content="Gopherize | go fmt your face.">
+		<meta property="og:type" content="website">
+		<meta property="og:description" content="Detect faces in the photo and make it Gopher.">
+		<meta property="og:image" content="https://gopherize.com/assets/img/ogp.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="1200">
+		<meta property="og:url" content="https://gopherize.com">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="stylesheet" type="text/css" href="/assets/css/style.css">
+    <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/snackbarjs/1.1.0/snackbar.min.css">
+	</head>
+	<body>
+    <div class="container">
+      <div class="columns">
+        <div class="column col-12">
+          <div class="container grid-xl">
+            <div class="columns">
+              <div class="column col-5 col-mr-auto col-xl-6 col-lg-12 block">
+                <h1 class="h2" style="margin-bottom:.25rem">
+                  `go fmt` your face.
+                </h1>
+                <p style="margin-bottom:2rem;">
+                  Detect faces in the photo and make it Gopher.
+                </p>
+
+                <form id="urlForm" method="get">
+                  <div class="form-group">
+                    <input class="form-input" type="text" name="url" class="input" placeholder="Enter the URL to gopherize e.g., https://example.com/path/to/image">
+                  </div>
+                  <div class="form-group text-center">
+                    <button class="btn btn-primary w-100">
+                      Gopherize URL
+                    </button>
+                  </div>
+                </form>
+
+                <div class="divider text-center" data-content="OR" style="margin:1rem 0"></div>
+
+                <form id="fileForm" method="post" action="/" enctype="multipart/form-data">
+                  <div class="form-group text-center">
+                    <input id="fileInput" class="form-input" style="display:none" type="file" name="image" accept="image/*">
+                    <button id="openFileWindow" type="button" class="btn btn-primary w-100">
+                      Browse file
+                    </button>
+                  </div>
+                </form>
+
+              </div>
+              <div class="column col-6 col-lg-12 gopherWrap">
+                <img class="img-responsive movingGopher" src="/assets/img/gopher.png">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="column col-12 bg-gray block text-center">
+          <h2 class="h3" style="margin-bottom:1.5rem;">What is gopherize?</h2>
+          <div class="container grid-sm text-center">
+            <div class="columns">
+              <div class="column col-6 col-sm-12">
+                <figure class="figure">
+                  <img class="img-responsive rounded m-auto exampleImg" src="/assets/img/tanksuzuki_before.png">
+                  <figcaption class="figure-caption text-center">non gopherized.</figcaption>
+                </figure>
+              </div>
+              <div class="column col-6 col-sm-12">
+                <figure class="figure">
+                  <img class="img-responsive rounded m-auto exampleImg" src="/assets/img/tanksuzuki_after.png">
+                  <figcaption class="figure-caption text-center">gopherized. 🎉🎉🎉</figcaption>
+                </figure>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="column col-12 bg-primary block text-light">
+          <div class="container grid-md text-center">
+            <h2 class="h3">Bookmarklet</h2>
+            <p>
+              You can use bookmarklet for gopherization.<br>
+              Please execute the bookmarklet on the tab with image.
+            </p>
+            <button id="copyBookmarklet" class="btn">
+              <i class="fas fa-clipboard"></i>
+              Copy bookmarklet code
+            </button>
+
+          </div>
+        </div>
+        <div class="column col-12 text-center block">
+          <p>
+            <a href="http://blog.golang.org/gopher" target="_blank">The Go gopher</a> was designed by <a href="http://reneefrench.blogspot.com/" target="_blank">Renée French</a>.
+          </p>
+          <p>
+            <a href="https://github.com/golang-samples/gopher-vector" target="_blank">Gopher images</a> was created by <a href="https://twitter.com/tenntenn" target="_blank">Takuya Ueda</a>.
+            Licensed under the <a href="https://creativecommons.org/licenses/by/3.0/deed.en" target="_blank">CC BY 3.0</a>.
+          </p>
+          <p>
+            <a href="https://github.com/tanksuzuki/gopherize" target="_blank">Gopherize</a> was designed and built with <span class="text-error">♥</span> by <a href="https://twitter.com/tanksuzuki" target="_blank">Asuka Suzuki</a>.
+            Licensed under the MIT License.
+          </p>
+          <p>
+            <a href="https://github.com/tanksuzuki/gopherize" target="_blank" class="btn btn-github">
+              <i class="fab fa-github"></i>
+              Fork me on GitHub
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/snackbarjs/1.1.0/snackbar.min.js"></script>
+    <script>
+      const execCopy = string => {
+        let temp = document.createElement('div')
+        temp.appendChild(document.createElement('pre')).textContent = string
+
+        let s = temp.style
+        s.position = 'fixed'
+        s.left = '-100%'
+
+        document.body.appendChild(temp)
+        document.getSelection().selectAllChildren(temp)
+
+        const result = document.execCommand('copy')
+
+        document.body.removeChild(temp)
+        return result
+      }
+
+      $("#copyBookmarklet").click(() => {
+        const code = 'javascript:location.href="https://gopherize.com?url="+location.href;'
+        if (execCopy(code)) {
+          $.snackbar({
+            content: "Copied!",
+            timeout: 2000,
+          })
+        } else {
+          $.snackbar({
+            content: "Copy failed",
+            timeout: 2000,
+          })
+        }
+      })
+
+      $("#urlForm").submit(() => {
+        const url = $("#urlForm input[name='url']").val()
+        if (url) {
+          const formAction = location.protocol + "//" + location.host + "?url=" + url
+          $("#urlForm").attr('action', formAction)
+          return true
+        }
+        $.snackbar({
+          content: "Enter the URL to gopherize",
+          timeout: 2000,
+        })
+        return false
+      })
+
+      $("#fileForm").on("change", "input[type='file']", e => {
+        $("#fileForm").submit()
+      })
+
+      $("#openFileWindow").click(() => {
+        $("#fileInput").click()
+        return false
+      })
+    </script>
+	</body>
+</html>
+{{end}}
