@@ -55,6 +55,11 @@ func handleGetIndex(c echo.Context) error {
 
 	ctx := appengine.NewContext(c.Request())
 
+	// Reject direct link to gopher image
+	if c.Request().Referer() == "" {
+		return echo.NewHTTPError(http.StatusForbidden)
+	}
+
 	ctxWithTimeout, _ := context.WithTimeout(ctx, 30*time.Second)
 	imgResp, err := urlfetch.Client(ctxWithTimeout).Get(imageUrl)
 	if err != nil {
