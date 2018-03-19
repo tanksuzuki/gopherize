@@ -25,6 +25,33 @@ $primary-color: #6ad7e5;
   display: inline-block;
 }
 
+.scrollDown {
+  position: absolute;
+  bottom: 2.5rem;
+  left: 50%;
+  width: 24px;
+  height: 24px;
+  margin-left: -12px;
+  border-left: 1px solid lighten($dark-color, 40%);;
+  border-bottom: 1px solid lighten($dark-color, 40%);;
+  transform: rotate(-45deg);
+  animation: scrollDown 1.5s infinite;
+  box-sizing: border-box;
+}
+@keyframes scrollDown {
+  0% {
+    transform: rotate(-45deg) translate(0, 0);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(-45deg) translate(-20px, 20px);
+    opacity: 0;
+  }
+}
+
 .gopherWrap {
   display: flex;
   justify-content: center;
