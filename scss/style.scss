@@ -21,6 +21,10 @@ $primary-color: #6ad7e5;
   @include button-variant(#333);
 }
 
+.dib {
+  display: inline-block;
+}
+
 .gopherWrap {
   display: flex;
   justify-content: center;

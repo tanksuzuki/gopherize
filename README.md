@@ -1,6 +1,6 @@
 # Gopherize
 
-Detect faces in the photo and make it Gopher.
+Detect faces in the photo and gopherize it. ʕ◔ϖ◔ʔ
 
 __before__
 
