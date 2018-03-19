@@ -16,19 +16,11 @@ For details, please visit [https://gopherize.com](https://gopherize.com).
 
 1. Run `dep ensure`
 1. Enable Cloud Vision API on [Google Cloud Console](https://console.cloud.google.com)
-1. Create API key on credentials page
-1. Create `/gopherize/app/credentials.json` file and put your API key
+1. Create service account key(JSON) on credentials page
+1. Save key file to `gopherize/app/service_account.json`
 1. Run `goapp serve app/` on repository root
 1. Access `http://localhost:8080`
 1. Enjoy :tada:
-
-__`/gopherize/app/credentials.json`__
-
-```
-{
-  "key": "put_your_api_key_here"
-}
-```
 
 ## Contribution
 

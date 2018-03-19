@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "cloud.google.com/go"
+  packages = ["compute/metadata","internal/version","vision/apiv1"]
+  revision = "20d4028b8a750c2aca76bf9fefa8ed2d0109b573"
+  version = "v0.19.0"
+
+[[projects]]
   name = "github.com/dgrijalva/jwt-go"
   packages = ["."]
   revision = "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e"
@@ -15,9 +21,15 @@
 
 [[projects]]
   name = "github.com/golang/protobuf"
-  packages = ["proto"]
+  packages = ["proto","protoc-gen-go/descriptor","ptypes","ptypes/any","ptypes/duration","ptypes/timestamp","ptypes/wrappers"]
   revision = "925541529c1fa6821df4e44ce2723319eb2be768"
   version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/googleapis/gax-go"
+  packages = ["."]
+  revision = "317e0006254c44a0ac427cc52a0e083ff0b9622f"
+  version = "v2.0.0"
 
 [[projects]]
   name = "github.com/labstack/echo"
@@ -56,6 +68,12 @@
   revision = "dcecefd839c4193db0d35b88ec65b4c12d360ab0"
 
 [[projects]]
+  name = "go.opencensus.io"
+  packages = ["internal","internal/tagencoding","plugin/ocgrpc","plugin/ochttp","plugin/ochttp/propagation/b3","plugin/ochttp/propagation/google","stats","stats/internal","stats/view","tag","trace","trace/propagation"]
+  revision = "983446b8dae3871316dc8610f7aa61e160b50b31"
+  version = "v0.5.0"
+
+[[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["acme","acme/autocert"]
@@ -70,8 +88,14 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
-  packages = ["context"]
+  packages = ["context","context/ctxhttp","http2","http2/hpack","idna","internal/timeseries","lex/httplex","trace"]
   revision = "e0c57d8f86c17f0724497efcb3bc617e82834821"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/oauth2"
+  packages = [".","google","internal","jws","jwt"]
+  revision = "fdc9e635145ae97e6c2cb777c48305600cf515cb"
 
 [[projects]]
   branch = "master"
@@ -80,14 +104,38 @@
   revision = "2f1e207ee39ff70f3433e49c6eb52677a515e3b5"
 
 [[projects]]
+  name = "golang.org/x/text"
+  packages = ["collate","collate/build","internal/colltab","internal/gen","internal/tag","internal/triegen","internal/ucd","language","secure/bidirule","transform","unicode/bidi","unicode/cldr","unicode/norm","unicode/rangetable"]
+  revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
+  version = "v0.3.0"
+
+[[projects]]
+  branch = "master"
+  name = "google.golang.org/api"
+  packages = ["googleapi/transport","internal","option","transport","transport/grpc","transport/http"]
+  revision = "55e9fb4044f4757138d4273ace23060d022d18f9"
+
+[[projects]]
   name = "google.golang.org/appengine"
-  packages = [".","internal","internal/app_identity","internal/base","internal/datastore","internal/log","internal/modules","internal/remote_api","internal/urlfetch","log","urlfetch"]
+  packages = [".","internal","internal/app_identity","internal/base","internal/datastore","internal/log","internal/modules","internal/remote_api","internal/socket","internal/urlfetch","log","socket","urlfetch"]
   revision = "150dc57a1b433e64154302bdc40b6bb8aefa313a"
   version = "v1.0.0"
+
+[[projects]]
+  branch = "master"
+  name = "google.golang.org/genproto"
+  packages = ["googleapis/api/annotations","googleapis/cloud/vision/v1","googleapis/rpc/status","googleapis/type/color","googleapis/type/latlng"]
+  revision = "f8c8703595236ae70fdf8789ecb656ea0bcdcf46"
+
+[[projects]]
+  name = "google.golang.org/grpc"
+  packages = [".","balancer","balancer/base","balancer/roundrobin","codes","connectivity","credentials","credentials/oauth","encoding","encoding/proto","grpclb/grpc_lb_v1/messages","grpclog","internal","keepalive","metadata","naming","peer","resolver","resolver/dns","resolver/passthrough","stats","status","tap","transport"]
+  revision = "8e4536a86ab602859c20df5ebfd0bd4228d08655"
+  version = "v1.10.0"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "1447313b368c9938de11ea09327044de51eea313c3a563d717b236d6c18d971e"
+  inputs-digest = "26448fa8183a734d0b29df4b43e77adbe38f323ca49e2f9dd46e0a273e33e3a0"
   solver-name = "gps-cdcl"
   solver-version = 1

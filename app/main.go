@@ -3,75 +3,26 @@ package main
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"html/template"
 	"image"
 	"image/jpeg"
 	"image/png"
 	"io"
-	"io/ioutil"
 	"math"
 	"net/http"
 	"os"
 	"time"
 
+	"cloud.google.com/go/vision/apiv1"
 	"github.com/disintegration/imaging"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	"google.golang.org/api/option"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
 	"google.golang.org/appengine/urlfetch"
 )
-
-var (
-	apiKey              string
-	errLandmarkNotFound = errors.New("landmark not found")
-)
-
-type RequestJSON struct {
-	Requests []Request `json:"requests"`
-}
-type Request struct {
-	Image    RequestImage     `json:"image"`
-	Features []RequestFeature `json:"features"`
-}
-type RequestImage struct {
-	Content string `json:"content"` // Base64
-}
-type RequestFeature struct {
-	Type string `json:"type"` // FACE_DETECTION
-}
-
-type ResponseJSON struct {
-	Responses []Response `json:"responses"`
-}
-type Response struct {
-	FaceAnnotations []ResponseFaceAnnotation `json:"faceAnnotations"`
-}
-type ResponseFaceAnnotation struct {
-	Landmarks []ResponseLandmark `json:"landmarks"`
-}
-type ResponseLandmark struct {
-	Type     string           `json:"type"`
-	Position ResponsePosition `json:"position"`
-}
-type ResponsePosition struct {
-	X float64 `json:"x"`
-	Y float64 `json:"y"`
-	Z float64 `json:"z"`
-}
-
-func (r ResponseFaceAnnotation) Get(name string) (ResponsePosition, error) {
-	for _, landmark := range r.Landmarks {
-		if landmark.Type == name {
-			return landmark.Position, nil
-		}
-	}
-	return ResponsePosition{}, fmt.Errorf("not found")
-}
 
 type TemplateRenderer struct {
 	templates *template.Template
@@ -81,23 +32,7 @@ func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c 
 	return t.templates.ExecuteTemplate(w, name, data)
 }
 
-type Credential struct {
-	Key string `json:"key"`
-}
-
 func init() {
-	credentialsBytes, err := ioutil.ReadFile("./credentials.json")
-	if err != nil {
-		fmt.Println("failed to open app/credentials.json:", err)
-		os.Exit(1)
-	}
-	var credential Credential
-	if err := json.Unmarshal(credentialsBytes, &credential); err != nil {
-		fmt.Println("failed to unmarshal app/credential.json:", err)
-		os.Exit(1)
-	}
-	apiKey = credential.Key
-
 	e := echo.New()
 	e.Use(middleware.Recover())
 	e.Use(middleware.Gzip())
@@ -176,55 +111,32 @@ func handlePostIndex(c echo.Context) error {
 }
 
 func gopherize(ctx context.Context, img image.Image, format string) ([]byte, error) {
-	imgBytes, err := imgToBytes(img, format)
+	baseImage, err := imgToBytes(img, format)
 	if err != nil {
 		log.Errorf(ctx, "failed to convert image to bytes: %s", err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
-	imgBase64 := base64.StdEncoding.EncodeToString(imgBytes)
 
-	request := RequestJSON{
-		Requests: []Request{
-			{
-				Image: RequestImage{
-					Content: imgBase64,
-				},
-				Features: []RequestFeature{
-					{
-						Type: "FACE_DETECTION",
-					},
-				},
-			},
-		},
-	}
-	requestJSON, err := json.Marshal(&request)
+	client, err := vision.NewImageAnnotatorClient(ctx, option.WithCredentialsFile("./service_account.json"))
 	if err != nil {
-		log.Errorf(ctx, "failed to marshal request json: %s", err)
+		log.Errorf(ctx, "failed to create client: %s", err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	apiResp, err := urlfetch.Client(ctx).Post(
-		"https://vision.googleapis.com/v1/images:annotate?key="+apiKey,
-		"application/json",
-		bytes.NewBuffer(requestJSON),
-	)
+	visionImage, err := vision.NewImageFromReader(bytes.NewBuffer(baseImage))
 	if err != nil {
-		log.Errorf(ctx, "failed to get response from cloud vision api: %s", err)
-		return nil, echo.NewHTTPError(http.StatusGatewayTimeout)
-	}
-	defer apiResp.Body.Close()
-
-	apiRespBytes, err := ioutil.ReadAll(apiResp.Body)
-	if err != nil {
-		log.Errorf(ctx, "failed to read response body from cloud vision api: %s", err)
-		return nil, echo.NewHTTPError(http.StatusBadGateway)
-	}
-
-	var responseJSON ResponseJSON
-	if err := json.Unmarshal(apiRespBytes, &responseJSON); err != nil {
-		log.Errorf(ctx, "failed to unmarshal json: %s", err)
+		log.Errorf(ctx, "failed to read image: %s", err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
+
+	faces, err := client.DetectFaces(ctx, visionImage, nil, 0)
+	if err != nil {
+		log.Errorf(ctx, "failed to detect faces: %s", err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	dstImage := imaging.New(img.Bounds().Dx(), img.Bounds().Dy(), image.Transparent)
+	dstImage = imaging.Paste(dstImage, img, image.Pt(0, 0))
 
 	eyeFile, err := os.Open("./gopher/eye.png")
 	if err != nil {
@@ -237,6 +149,29 @@ func gopherize(ctx context.Context, img image.Image, format string) ([]byte, err
 	if err != nil {
 		log.Errorf(ctx, "failed to decode eye image: %s", err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	// Eyes
+	for _, face := range faces {
+		faceLandmarks := vision.FaceFromLandmarks(face.Landmarks)
+		leftEye := faceLandmarks.Eyes.Left.Center
+		if leftEye == nil {
+			continue
+		}
+		rightEye := faceLandmarks.Eyes.Right.Center
+		if rightEye == nil {
+			continue
+		}
+
+		gopherEyeSize := int(math.Abs(float64(leftEye.X) - float64(rightEye.X)))
+		gopherEye := imaging.Resize(eyeImg, gopherEyeSize, 0, imaging.Lanczos)
+
+		leftEyeX := int(leftEye.X) - gopherEyeSize/2
+		leftEyeY := int(leftEye.Y) - gopherEyeSize/2
+		dstImage = imaging.Overlay(dstImage, gopherEye, image.Pt(leftEyeX, leftEyeY), 1.0)
+		rightEyeX := int(rightEye.X) - gopherEyeSize/2
+		rightEyeY := int(rightEye.Y) - gopherEyeSize/2
+		dstImage = imaging.Overlay(dstImage, gopherEye, image.Pt(rightEyeX, rightEyeY), 1.0)
 	}
 
 	mouthFile, err := os.Open("./gopher/mouth.png")
@@ -252,69 +187,22 @@ func gopherize(ctx context.Context, img image.Image, format string) ([]byte, err
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	dstImage := imaging.New(img.Bounds().Dx(), img.Bounds().Dy(), image.Transparent)
-	dstImage = imaging.Paste(dstImage, img, image.Pt(0, 0))
-
-	// Eyes
-	for _, landmarks := range responseJSON.Responses[0].FaceAnnotations {
-		leftEye, err := landmarks.Get("LEFT_EYE")
-		if err != nil && err != errLandmarkNotFound {
-			log.Errorf(ctx, "failed to get left eye info: %s", err)
-			return nil, echo.NewHTTPError(http.StatusInternalServerError)
+	for _, face := range faces {
+		faceLandmarks := vision.FaceFromLandmarks(face.Landmarks)
+		nose := faceLandmarks.Nose.Tip
+		if nose == nil {
+			continue
 		}
-		if err == errLandmarkNotFound {
+		mouthLeft := faceLandmarks.Mouth.Left
+		if mouthLeft == nil {
+			continue
+		}
+		mouthRight := faceLandmarks.Mouth.Right
+		if mouthRight == nil {
 			continue
 		}
 
-		rightEye, err := landmarks.Get("RIGHT_EYE")
-		if err != nil && err != errLandmarkNotFound {
-			log.Errorf(ctx, "failed to get right eye info: %s", err)
-			return nil, echo.NewHTTPError(http.StatusInternalServerError)
-		}
-		if err == errLandmarkNotFound {
-			continue
-		}
-
-		gopherEyeSize := int(math.Abs(leftEye.X - rightEye.X))
-		gopherEye := imaging.Resize(eyeImg, gopherEyeSize, 0, imaging.Lanczos)
-
-		leftEyeX := int(leftEye.X) - gopherEyeSize/2
-		leftEyeY := int(leftEye.Y) - gopherEyeSize/2
-		dstImage = imaging.Overlay(dstImage, gopherEye, image.Pt(leftEyeX, leftEyeY), 1.0)
-		rightEyeX := int(rightEye.X) - gopherEyeSize/2
-		rightEyeY := int(rightEye.Y) - gopherEyeSize/2
-		dstImage = imaging.Overlay(dstImage, gopherEye, image.Pt(rightEyeX, rightEyeY), 1.0)
-	}
-
-	// Mouth
-	for _, landmarks := range responseJSON.Responses[0].FaceAnnotations {
-		nose, err := landmarks.Get("NOSE_TIP")
-		if err != nil && err != errLandmarkNotFound {
-			log.Errorf(ctx, "failed to get nose info: %s", err)
-			return nil, echo.NewHTTPError(http.StatusInternalServerError)
-		}
-		if err == errLandmarkNotFound {
-			continue
-		}
-
-		mouthLeft, err := landmarks.Get("MOUTH_LEFT")
-		if err != nil && err != errLandmarkNotFound {
-			log.Errorf(ctx, "failed to get mouth left info: %s", err)
-			return nil, echo.NewHTTPError(http.StatusInternalServerError)
-		}
-		if err == errLandmarkNotFound {
-			continue
-		}
-
-		mouthRight, err := landmarks.Get("MOUTH_RIGHT")
-		if err != nil && err != errLandmarkNotFound {
-			log.Errorf(ctx, "failed to get mouth right info: %s", err)
-			return nil, echo.NewHTTPError(http.StatusInternalServerError)
-		}
-		if err == errLandmarkNotFound {
-			continue
-		}
-		gopherMouthSize := int(math.Abs(mouthRight.X - mouthLeft.X))
+		gopherMouthSize := int(math.Abs(float64(mouthRight.X) - float64(mouthLeft.X)))
 		gopherMouth := imaging.Resize(mouthImg, gopherMouthSize, 0, imaging.Lanczos)
 
 		gopherMouthX := int(nose.X) - gopherMouth.Rect.Dx()/2

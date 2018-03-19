@@ -1,4 +1,4 @@
 .DS_Store
 vendor
 node_modules
-app/credentials.json
+app/service_account.json
