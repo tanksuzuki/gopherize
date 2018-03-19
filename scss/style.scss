@@ -27,6 +27,11 @@ $primary-color: #6ad7e5;
   align-items: flex-end;
 }
 
+.column > .container {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
 .w-100 {
   width: 100%;
 }
@@ -34,10 +39,6 @@ $primary-color: #6ad7e5;
 .m-auto {
   margin-left: auto;
   margin-right: auto;
-}
-
-.exampleImg {
-  border: 2px solid $dark-color;
 }
 
 @keyframes horizontal {
@@ -48,6 +49,15 @@ $primary-color: #6ad7e5;
   100% { transform: translateX(0px); }
 }
 
+@keyframes vertical {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(5px); }
+  100% { transform: translateY(0px); }
+}
+
 .movingGopher {
   animation: horizontal linear .75s infinite;
+  &:hover {
+    animation: vertical linear .25s infinite;
+  }
 }
