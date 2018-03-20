@@ -122,6 +122,7 @@
 
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/snackbarjs/1.1.0/snackbar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
     <script>
       const execCopy = string => {
         let temp = document.createElement('div')
@@ -170,7 +171,17 @@
       })
 
       $("#fileForm").on("change", "input[type='file']", e => {
-        $("#fileForm").submit()
+        const file = $("#fileForm input[type='file']")[0].files[0]
+        EXIF.getData(file, function() {
+          let orientation = 0
+          const tag = EXIF.getTag(this, "Orientation")
+          if (tag) {
+            orientation = tag
+          }
+          const formAction = location.protocol + "//" + location.host + "?orientation=" + orientation
+          $("#fileForm").attr('action', formAction)
+          $("#fileForm").submit()
+        })
       })
 
       $("#openFileWindow").click(() => {

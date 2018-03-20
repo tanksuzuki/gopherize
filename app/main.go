@@ -12,6 +12,7 @@ import (
 	"math"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"cloud.google.com/go/vision/apiv1"
@@ -87,6 +88,15 @@ func handleGetIndex(c echo.Context) error {
 func handlePostIndex(c echo.Context) error {
 	ctx := appengine.NewContext(c.Request())
 
+	orientation := 0
+	if orientationString := c.QueryParam("orientation"); orientationString != "" {
+		o, err := strconv.Atoi(orientationString)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		orientation = o
+	}
+
 	fileHeader, err := c.FormFile("image")
 	if err != nil {
 		log.Errorf(ctx, "failed to get form file: %s", err)
@@ -104,6 +114,7 @@ func handlePostIndex(c echo.Context) error {
 		log.Errorf(ctx, "failed to decode image: %s", err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
+	img = fixOrientation(img, orientation)
 
 	gopherizedBytes, err := gopherize(ctx, img, format)
 	if err != nil {
@@ -113,6 +124,29 @@ func handlePostIndex(c echo.Context) error {
 	c.Response().Header().Set("Content-Type", "image/"+format)
 	c.Response().Write(gopherizedBytes)
 	return nil
+}
+
+func fixOrientation(img image.Image, orientation int) image.Image {
+	switch orientation {
+	case 0, 1:
+		return img
+	case 2:
+		return imaging.FlipH(img)
+	case 3:
+		return imaging.Rotate180(img)
+	case 4:
+		return imaging.FlipH(imaging.Rotate180(img))
+	case 5:
+		return imaging.FlipH(imaging.Rotate270(img))
+	case 6:
+		return imaging.Rotate270(img)
+	case 7:
+		return imaging.FlipH(imaging.Rotate90(img))
+	case 8:
+		return imaging.Rotate90(img)
+	default:
+		return img
+	}
 }
 
 func gopherize(ctx context.Context, img image.Image, format string) ([]byte, error) {

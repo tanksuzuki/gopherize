@@ -56,6 +56,12 @@
   version = "v0.0.3"
 
 [[projects]]
+  branch = "go1"
+  name = "github.com/rwcarlsen/goexif"
+  packages = ["exif","tiff"]
+  revision = "17202558c8d9c3fd047859f1a5e73fd9ae709187"
+
+[[projects]]
   branch = "master"
   name = "github.com/valyala/bytebufferpool"
   packages = ["."]
@@ -136,6 +142,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "26448fa8183a734d0b29df4b43e77adbe38f323ca49e2f9dd46e0a273e33e3a0"
+  inputs-digest = "4ddbcf877c61ab95a28de03d048d4b09b99a61372279f50ce212c1a1eb2648a7"
   solver-name = "gps-cdcl"
   solver-version = 1
