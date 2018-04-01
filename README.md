@@ -30,6 +30,10 @@ For details, please visit [https://gopherize.com](https://gopherize.com).
 1. Rebase your local changes against the master branch
 1. Create new Pull Request
 
+## TODO
+
+* test
+
 ## Author
 
 [Asuka Suzuki](https://twitter.com/tanksuzuki)
